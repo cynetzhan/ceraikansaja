@@ -53,6 +53,7 @@ include_once 'conf/koneksi.php';
 
 <!-- project main css files -->
 <link rel="stylesheet" href="assets/css/main.css">
+<?= $vws->get_inline(); ?>
 <!--/ stylesheets -->
 
 
