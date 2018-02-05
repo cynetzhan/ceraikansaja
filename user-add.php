@@ -1,4 +1,11 @@
 <?php
+include_once('conf/koneksi.php');
+if(isset($_GET['hapus'])){
+ $query=mysql_query("delete from login where id = '".$_GET['hapus']."'");
+ if($query){
+  echo "<script>alert('Pengguna berhasil dihapus')</script>";
+ }
+}
 include('header.php');
 ?>
 <!-- ====================================================
@@ -114,6 +121,7 @@ include('header.php');
            <tr>
             <th>ID Pengguna</th>
             <th>Username</th>
+            <th>Aksi</th>
            </tr>
           </thead>
           <tbody>
@@ -123,6 +131,7 @@ include('header.php');
            <tr>
             <td><?= $row['id'] ?></td>
             <td><?= $row['nama'] ?></td>
+            <td><a href="user-add.php?hapus=<?= $row['id'] ?>" onclick="return confirm('Hapus pengguna ini ?')"><span class="fa fa-remove"></span> Hapus</a></td>
            </tr>
            <?php } ?>
           </tbody>
