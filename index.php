@@ -15,20 +15,55 @@ $vws->reset_inline();
 }
 </style>
     <div class="container" style="margin-top:70px;min-height:70vh">
+    <span style="text-align:center;margin-bottom:50px"><h3>Sistem Informasi Titik Perceraian Kota Pekanbaru</h3></span>
      <div class="row">
-      <div class="col-sm-12">
-       <span style="text-align:center;margin-bottom:50px"><h3>Sistem Informasi Titik Perceraian Kota Pekanbaru</h3></span>
+      <div class="col-sm-3">
+       <div class="panel panel-primary" id="features">
+         <div class="panel-heading">
+           <h3 class="panel-title">Titik Perceraian</h3>
+         </div>
+         <div class="panel-body">
+           <div class="row">
+             <div class="col-xs-8 col-md-8">
+               <input type="text" class="form-control search" placeholder="Filter" />
+             </div>
+             <div class="col-xs-4 col-md-4">
+               <button type="button" class="btn btn-primary pull-right sort" data-sort="feature-name" id="sort-btn"><i class="fa fa-sort"></i>&nbsp;&nbsp;Urutkan</button>
+             </div>
+           </div>
+         </div>
+         <div class="sidebar-table">
+           <table class="table table-hover" id="feature-list">
+             <thead class="hidden">
+               <tr>
+                 <th>Icon</th>
+               <tr>
+               <tr>
+                 <th>Name</th>
+               <tr>
+               <tr>
+                 <th>Chevron</th>
+               <tr>
+             </thead>
+             <tbody class="list"></tbody>
+           </table>
+         </div>
+       </div>
+      </div>
+      <div class="col-sm-9">
        <div id="map" style="height:70vh"></div>
       </div>
      </div>
     </div>
-    
     <hr />
 <?php 
 ob_start();
 ?>
 <script src="assets/js/leaflet.js"></script>
 <script src="assets/js/leaflet.markercluster.js"></script>
+<script src="assets/js/list.min.js"></script>
+<script src="assets/js/typeahead.bundle.min.js"></script>
+<script src="assets/js/handlebars.min.js"></script>
         <!--/ custom javascripts -->
 <script>
 <?php
@@ -39,6 +74,12 @@ while($row=mysql_fetch_assoc($query)){
 }
 echo "jmcerai_kecamatan = ".json_encode($kecamatan)."\n";
 ?>
+ var featureList;
+ var listCerai = [];
+ $(document).on("click", ".feature-row", function (e) {
+  $(document).off("mouseout", ".feature-row", clearHighlight);
+  sidebarClick(parseInt($(this).attr("id"), 10));
+ });
  function warnaChloro(nilai){
   warna = "rgba(241,227,58,1)";
   if(nilai > 150){
@@ -47,6 +88,30 @@ echo "jmcerai_kecamatan = ".json_encode($kecamatan)."\n";
    warna = "rgba(241,142,58,1)"
   }
   return warna
+ }
+ 
+ function clearHighlight() {
+  highlight.clearLayers();
+ }
+  
+ function sidebarClick(id) {
+  var layer = markerClusters.getLayer(id);
+  map.setView([layer.getLatLng().lat, layer.getLatLng().lng], 17);
+  layer.fire("click");
+  /* Hide sidebar and go to the map on small screens */
+  if (document.body.clientWidth <= 767) {
+   $("#sidebar").hide();
+   map.invalidateSize();
+  }
+ }
+
+ function syncSidebar(){
+  featureList = new List("features", {
+			valueNames: ["feature-name"]
+		});
+  featureList.sort("feature-name", {
+   order: "asc"
+  });
  }
  $("#geocodeit").click(function () {
   //geocoder = new google.maps.Geocoder();
@@ -105,18 +170,21 @@ echo "jmcerai_kecamatan = ".json_encode($kecamatan)."\n";
  var markerCerai = L.geoJson(null, {
   pointToLayer: function (feature, latlng) {
    return L.marker(latlng, {
-    icon: L.icon({
-     iconUrl: "assets/images/heartbreak.png",
-     iconSize: [30,28],
-     iconAnchor: [15, 28],
-     popupAnchor: [0, -25]
-    }),
     title: feature.properties.no_putusan,
     riseOnHover: true
    });
   },
   onEachFeature: function (feature, layer) {
    layer.bindPopup("<strong>"+feature.properties.no_putusan+"</strong><br>Alamat:"+feature.properties.alamat+", "+feature.properties.kel+", "+feature.properties.kec+"<br><a href='http://putusan.mahkamahagung.go.id/pengadilan/pa-pekanbaru/'>Cari Nomor Putusan</a>");
+   $("#feature-list tbody").append('<tr class="feature-row" id="' + L.stamp(layer) + '" lat="' + layer.getLatLng().lat + '" lng="' + layer.getLatLng().lng + '"><td style="vertical-align: middle;"><img width="15" height="22" src="assets/css/images/marker-icon.png"></td><td class="feature-name">' + layer.feature.properties.no_putusan + '</td><td style="vertical-align: middle;"><i class="fa fa-chevron-right pull-right"></i></td></tr>');
+   listCerai.push({
+     name: feature.properties.no_putusan,
+					address: feature.properties.alamat,
+					source: "Cerai",
+					id: L.stamp(layer),
+					lat: feature.geometry.coordinates[1],
+					lng: feature.geometry.coordinates[0]
+   });
   }
  });
  $.getJSON("geodata-cerai.php", function (data) {
@@ -170,16 +238,18 @@ echo "jmcerai_kecamatan = ".json_encode($kecamatan)."\n";
    zoom: 10,
    center: [0.54, 101.5],
    layers: [osm, pekanbaru, markerClusters],
-   zoomControl: true,
+   zoomControl: false,
    attributionControl: true
   });
   
   map.on("overlayadd", function (e) {
     markerClusters.addLayer(markerCerai);
+    syncSidebar();
   });
 
   map.on("overlayremove", function (e) {
     markerClusters.removeLayer(markerCerai);
+    syncSidebar();
   });
   
   L.Control.Legend = L.Control.extend({
@@ -196,6 +266,24 @@ echo "jmcerai_kecamatan = ".json_encode($kecamatan)."\n";
   }
   
   L.control.legend({position: 'bottomleft'}).addTo(map);
+  
+  /*L.Control.Cari = L.Control.extend({
+   onAdd: function(map){
+    var divlegend = L.DomUtil.create('div','kotakcari');
+    divlegend.style = "min-width:200px;min-height:150px;background-color:#fff;padding:20px;border-radius:5px";
+    divlegend.innerHTML = "<strong>Cari Keputusan Perceraian</strong><input type='text' id='cari' placeholder='Nomor Keputusan' class='form-control'/>";
+    return divlegend;
+   }
+  });
+  
+  L.control.cari = function(opts){
+   return new L.Control.Cari(opts);
+  }
+  
+  L.control.cari({position: 'topleft'}).addTo(map);*/
+  var zoomControl = L.control.zoom({
+		position: "bottomright"
+	}).addTo(map);
   var baseLayers = {
    "Open Street Map": osm,
    "Google Hybrid": googleHybrid,
@@ -205,7 +293,7 @@ echo "jmcerai_kecamatan = ".json_encode($kecamatan)."\n";
    "Arial Imagery": usgsImagery,
   };
   var overLayers = {
-    "<img src='assets/images/heartbreak.png' width=20 height=18 /> Titik Cerai": markerCeraiLayer
+    "<img src='assets/css/images/marker-icon.png' width=15 height=22 /> Titik Cerai": markerCeraiLayer
   }
   if (document.body.clientWidth <= 767) {
    var isCollapsed = true;
@@ -214,7 +302,55 @@ echo "jmcerai_kecamatan = ".json_encode($kecamatan)."\n";
   }
   var layerControl = L.control.layers(baseLayers,overLayers, {
     collapsed: isCollapsed
-   }).addTo(map);
+  }).addTo(map);
+   
+  $(document).one("ajaxStop", function () {
+    featureList = new List("features", {
+      valueNames: ["feature-name"]
+     });
+    featureList.sort("feature-name", {
+     order: "asc"
+    });
+    var CeraiBD = new Bloodhound({
+     name: "Cerai",
+     datumTokenizer: function (d) {
+      return Bloodhound.tokenizers.whitespace(d.name);
+     },
+     queryTokenizer: Bloodhound.tokenizers.whitespace,
+     local: listCerai,
+     limit: 10
+    });
+    CeraiBD.initialize();
+    
+    $("#cari").typeahead({
+      minLength: 3,
+      highlight: true,
+      hint: false
+     }, {
+      name: "Cerai",
+      displayKey: "name",
+      source: CeraiBD.ttAdapter(),
+      templates: {
+       header: "<h4 class='typeahead-header'><img src='assets/css/images/marker-icon.png' width='24' height='28'>&nbsp;Cerai</h4>",
+       suggestion: Handlebars.compile(["{{name}}<br>&nbsp;<small>{{address}}</small>"].join(""))
+      }
+     }).on("typeahead:selected", function (obj, datum) {
+      if (datum.source === "Cerai") {
+       if (!map.hasLayer(markerCeraiLayer)) {
+        map.addLayer(markerCeraiLayer);
+       }
+       map.setView([datum.lat, datum.lng], 17);
+       if (map._layers[datum.id]) {
+        map._layers[datum.id].fire("click");
+       }
+      }
+      if ($(".navbar-collapse").height() > 50) {
+        $(".navbar-collapse").collapse("hide");
+      }
+     });
+     $(".twitter-typeahead").css("position", "static");
+     $(".twitter-typeahead").css("display", "block");
+  });
 </script>
 <?php
 $vws->set_inline(ob_get_clean());

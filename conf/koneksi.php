@@ -19,7 +19,6 @@ function tanggal($dt,$with_timestamp=false){
   "00" => "N/A",
   "01" => "Januari",
   "02" => "Februari",
-  "12" => "Desember",
   "03" => "Maret",
   "04" => "April",
   "05" => "Mei",
@@ -28,7 +27,8 @@ function tanggal($dt,$with_timestamp=false){
   "08" => "Agustus",
   "09" => "September",
   "10" => "Oktober",
-  "11" => "November"
+  "11" => "November",
+  "12" => "Desember"
  );
  $date=explode("-",$dt);
  $tahun=substr($date[2],0,2); //fix date with timestamp format
@@ -38,6 +38,8 @@ function tanggal($dt,$with_timestamp=false){
  }
  return $tanggal;
 }
+
+
 class ViewAsset{
  public $inlinejs = [];
  

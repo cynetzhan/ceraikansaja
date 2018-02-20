@@ -31,8 +31,8 @@
 
 .panel-success>.panel-heading {
     color: #fff;
-    background-color: #282828;
-    border-color: #d5b82a;
+    background-color: #053c40;
+    border-color: #28ca00;
     border-width: 3px;
     background-position: center left;
     background-repeat: no-repeat;
@@ -41,8 +41,8 @@
 
 .panel-primary>.panel-heading {
     color: #fff;
-    background-color: #282828;
-    border-color: #d5b82a;
+    background-color: #053c40;
+    border-color: #28ca00;
     border-width: 3px;
     background-position: center right;
     background-repeat: no-repeat;
