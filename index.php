@@ -32,7 +32,7 @@ $vws->reset_inline();
              </div>
            </div>
          </div>
-         <div class="sidebar-table">
+         <div class="sidebar-table" style="max-height:300px;overflow:scroll">
            <table class="table table-hover" id="feature-list">
              <thead class="hidden">
                <tr>
@@ -318,7 +318,6 @@ echo "jmcerai_kecamatan = ".json_encode($kecamatan)."\n";
      },
      queryTokenizer: Bloodhound.tokenizers.whitespace,
      local: listCerai,
-     limit: 10
     });
     CeraiBD.initialize();
     
